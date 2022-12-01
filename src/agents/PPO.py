@@ -1,8 +1,10 @@
-from envs.StockTrading import StockTrading
+import envs.StockTrading import StockEnv
 from stable_baselines3 import PPO
 from pandas_datareader import data as pdr
 from stable_baselines3.common.vec_env import DummyVecEnv
 import time
+import sys
+sys.path.append('/../envs/')
 
 tickers = ['BNDX', 'URTH']
 start_date = '2019-01-01'
@@ -35,3 +37,13 @@ def train():
     model.save(f'PPO.agent')
     print(f'Train Time : {end-start}')
     return model
+
+def predict():
+    actions_memory = []
+    model = train()
+    for i in range(len(data.index.unique())):
+        action, _states = model.predict(obs)
+        obs, rewards, dones, info = env.step(action)
+        if i == (len(data.index.unique()) - 2):
+            actions_memory = env.env_method(method_name="get_action_memory")
+        
