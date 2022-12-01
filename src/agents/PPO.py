@@ -1,10 +1,12 @@
 from stable_baselines3 import PPO
 from pandas_datareader import data as pdr
 from stable_baselines3.common.vec_env import DummyVecEnv
+import matplotlib.pyplot as plt
 import time
+import numpy as np
 import sys
 sys.path.append("..")
-from envs import StockEnv
+from envs.StockTrading import StockEnv
 
 tickers = ['BNDX', 'URTH']
 start_date = '2019-01-01'
@@ -21,18 +23,33 @@ data = data['Adj Close']
 
 train_pct = 0.8
 samples_train = int(train_pct*len(data))
-#print(data.isna().sum())
+#print(len(data))
 data_train = data[:samples_train]
 data_test = data[samples_train:]
 
-runs = 1
-timesteps = 10000
+max_trade = 30
+balance = 10000
+transaction_fee = 0.001
 
+plt.rcParams["figure.figsize"] = (10,6)
+for i in tickers:
+    plt.plot(data[i], label=i)
+
+# only one line may be specified; full height
+plt.legend()
+plt.margins(x=0)
+plt.ylabel("Closing Share Prise (USD)")
+plt.xlabel("Time (Years)")
+plt.savefig('StockPrice.png',bbox_inches='tight')
+
+
+runs = 1
+timesteps = 1000
 
 def train():
     policy = "MlpPolicy"
     train_env = DummyVecEnv([lambda: StockEnv(df=data_train)])
-    model = PPO(policy, train_env, verbose=0, seed=42)
+    model = PPO(policy, train_env, verbose=1, seed=42)
     start = time.time()
     model.learn(total_timesteps=timesteps)
     end = time.time()
@@ -41,8 +58,7 @@ def train():
     return model
 
 
-model = train()
-
+model = train()  
 
 def predict():
     actions_memory = []
@@ -56,7 +72,8 @@ def predict():
             actions_memory = env.env_method(method_name="get_action_memory")
     return actions_memory[0]
 
-
+length = data_test.shape[0]
+stocks = data_test.shape[1]
 Cumulative_returns_daily_drl_ppo = np.zeros([runs, length])
 portfolio_weights_ppo = np.zeros([runs, length, stocks])
 
@@ -68,6 +85,7 @@ while (i < runs):
     return_stocks = data_test.pct_change()
     return_stocks_ppo = np.sum(return_stocks.multiply(
         portfolio_weights_ppo[i]), axis=1)
+    print(portfolio_weights_ppo[i])
     Cumulative_returns_daily_drl_ppo[i] = (1+return_stocks_ppo).cumprod()
     i = i+1
 

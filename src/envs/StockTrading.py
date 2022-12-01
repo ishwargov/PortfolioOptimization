@@ -13,7 +13,7 @@ from gym import spaces
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 max_trade = 30
-balance = 0
+balance = 10000
 transaction_fee = 0.001
 
 
@@ -30,7 +30,7 @@ class StockEnv(gym.Env):
         self.state = [balance]+self.data.values.tolist()+[0]*self.stock_dim
         self.reward = 0
         self.memory = [balance]
-        self.end = False
+        self.terminal = False
         self.day = 0
         self.act_memory = [[1/self.stock_dim]*self.stock_dim]
 
@@ -49,10 +49,10 @@ class StockEnv(gym.Env):
         self.state[index+self.stock_dim+1] += action
 
     def step(self, actions):
-        self.end = (self.day >= len(self.df.unique())-1)
+        self.terminal = (self.day >= len(self.df.index.unique())-1)
 
-        if self.end:
-            return self.state, self.reward, self.end, {}
+        if self.terminal:
+            return self.state, self.reward, self.terminal, {}
 
         else:
             actions = actions*max_trade
@@ -84,8 +84,8 @@ class StockEnv(gym.Env):
             self.reward = final_assets - total_assets
             weights = self.normalize(
                 np.array(self.state[(self.stock_dim+1):(self.stock_dim*2+1)]))
-            self.act_memory.append(weights.to_list)
-        return self.state, self.reward, self.end, {}
+            self.act_memory.append(weights.tolist())
+        return self.state, self.reward, self.terminal, {}
 
     def normalize(self, actions):
         return actions/(np.sum(actions)+1e-10)
@@ -96,10 +96,11 @@ class StockEnv(gym.Env):
     def reset(self):
         self.day = 0
         self.data = self.df.iloc[0, :]
-        self.end = False
+        self.terminal = False
         self.act_memory = [[1/self.stock_dim]*self.stock_dim]
         self.state = [balance]+self.data.values.tolist()+[0]*self.stock_dim
         self.reward = 0
+        return self.state
 
     def get_action_memory(self):
         return self.actions_memory
