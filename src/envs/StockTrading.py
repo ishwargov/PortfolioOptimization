@@ -100,6 +100,6 @@ class StockEnv(gym.Env):
         self.act_memory = [[1/self.stock_dim]*self.stock_dim]
         self.state = [balance]+self.data.values.tolist()+[0]*self.stock_dim
         self.reward = 0
-    
+
     def get_action_memory(self):
         return self.actions_memory
