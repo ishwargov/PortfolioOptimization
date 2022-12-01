@@ -103,4 +103,4 @@ class StockEnv(gym.Env):
         return self.state
 
     def get_action_memory(self):
-        return self.actions_memory
+        return self.act_memory

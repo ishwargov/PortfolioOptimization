@@ -4,6 +4,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 import matplotlib.pyplot as plt
 import time
 import numpy as np
+import pandas as pd
 import sys
 sys.path.append("..")
 from envs.StockTrading import StockEnv
@@ -28,7 +29,7 @@ data_train = data[:samples_train]
 data_test = data[samples_train:]
 
 max_trade = 30
-balance = 10000
+balance = 0
 transaction_fee = 0.001
 
 plt.rcParams["figure.figsize"] = (10,6)
@@ -43,8 +44,8 @@ plt.xlabel("Time (Years)")
 plt.savefig('StockPrice.png',bbox_inches='tight')
 
 
-runs = 1
-timesteps = 1000
+runs = 3
+timesteps = 10000
 
 def train():
     policy = "MlpPolicy"
@@ -58,17 +59,15 @@ def train():
     return model
 
 
-model = train()  
-
 def predict():
     actions_memory = []
     env = DummyVecEnv([lambda: StockEnv(df=data_test)])
     obs = env.reset()
-
-    for i in range(len(data.index.unique())):
-        action, _states = model.predict(obs)
+    ppo.set_random_seed(42)
+    for i in range(len(data_test.index.unique())):
+        action, _states = ppo.predict(obs)
         obs, rewards, dones, info = env.step(action)
-        if i == (len(data.index.unique()) - 2):
+        if i == (len(data_test.index.unique()) - 2):
             actions_memory = env.env_method(method_name="get_action_memory")
     return actions_memory[0]
 
@@ -78,9 +77,8 @@ Cumulative_returns_daily_drl_ppo = np.zeros([runs, length])
 portfolio_weights_ppo = np.zeros([runs, length, stocks])
 
 i = 0
-cont = 0
 while (i < runs):
-    model = train
+    ppo = train()
     portfolio_weights_ppo[i] = np.array(predict())
     return_stocks = data_test.pct_change()
     return_stocks_ppo = np.sum(return_stocks.multiply(
