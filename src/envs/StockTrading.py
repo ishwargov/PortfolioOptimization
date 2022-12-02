@@ -12,7 +12,7 @@ from gym import spaces
 
 from stable_baselines3.common.vec_env import DummyVecEnv
 
-max_trade = 30
+max_trade = 50
 balance = 10000
 transaction_fee = 0.001
 
@@ -45,8 +45,11 @@ class StockEnv(gym.Env):
 
     def buy(self, index, action):
         action = np.floor(action)
-        self.state[0] -= self.state[index+1] * action * (1 + transaction_fee)
-        self.state[index+self.stock_dim+1] += action
+        max_action = max(
+            self.state[0]//(self.state[index+1] * (1 + transaction_fee)), action)
+        self.state[0] -= self.state[index+1] * \
+            max_action * (1 + transaction_fee)
+        self.state[index+self.stock_dim+1] += max_action
 
     def step(self, actions):
         self.terminal = (self.day >= len(self.df.index.unique())-1)
@@ -70,6 +73,14 @@ class StockEnv(gym.Env):
 
             for index in buy_index:
                 self.buy(index, actions[index])
+
+            # force buy with balance (equal weight to stocks)
+            if(self.state[0] > 0):
+                cash_div = self.state[0]/self.stock_dim
+                for i in range(self.stock_dim):
+                    autoaction = cash_div//(self.state[i+1]
+                                            * (1 + transaction_fee))
+                    self.buy(i, autoaction)
 
             self.day += 1
             self.data = self.df.iloc[self.day, :]

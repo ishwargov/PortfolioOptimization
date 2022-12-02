@@ -14,7 +14,7 @@ if True:
 
 sns.set_theme()
 
-tickers = ['BNDX', 'URTH', 'MSFT']
+tickers = ['URTH', 'BNDX']
 start_date = '2012-01-01'
 end_date = "2022-11-20"
 df = pdr.get_data_yahoo([tickers][0], start=start_date, end=end_date)
@@ -26,7 +26,7 @@ data['Adj Close'] = data['Adj Close'].bfill()
 df = df.bfill(axis=1)
 data = data['Adj Close']
 
-train_pct = 0.7
+train_pct = 0.8
 samples_train = int(train_pct*len(data))
 # print(len(data))
 data_train = data[:samples_train]
@@ -45,14 +45,17 @@ plt.savefig('StockPrice.png', bbox_inches='tight')
 
 # start training and predicting
 runs = 5
-timesteps = 25000
+timesteps = 4000
 
-max_trade = 1000
-balance = 10000
+max_trade = 10
+balance = 1000
 transaction_fee = 0.001
 
 
 def train():
+    max_trade = 10
+    balance = 1000
+    transaction_fee = 0.001
     policy = "MlpPolicy"
     train_env = DummyVecEnv([lambda: StockEnv(df=data_train)])
     model = PPO(policy, train_env, verbose=1)
@@ -65,6 +68,9 @@ def train():
 
 
 def predict():
+    max_trade = 10
+    balance = 1000
+    transaction_fee = 0.001
     actions_memory = []
     env = DummyVecEnv([lambda: StockEnv(df=data_test)])
     obs = env.reset()
@@ -83,9 +89,6 @@ portfolio_weights_ppo = np.zeros([runs, length, stocks])
 
 i = 0
 while (i < runs):
-    max_trade = 1000
-    balance = 10000
-    transaction_fee = 0.001
     ppo = train()
     portfolio_weights_ppo[i] = np.array(predict())
     return_stocks = data_test.pct_change()

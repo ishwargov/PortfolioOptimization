@@ -1,17 +1,19 @@
 
 import time
 import sys
-sys.path.append("..")
 import gym
 from stable_baselines3.common.env_checker import check_env
 from pandas_datareader import data as pdr
-from envs.StockTrading import StockEnv
+if True:
+    sys.path.append("..")
+    from envs.StockTrading import StockEnv
+
 
 tickers = ['BNDX', 'URTH']
-start_date = '2019-01-01'
+start_date = '2012-01-01'
 end_date = "2022-11-20"
 df = pdr.get_data_yahoo([tickers][0], start=start_date, end=end_date)
-
+print(df.shape)
 # remove NaN values
 data = df.copy()
 data['Adj Close'] = data['Adj Close'].ffill()
