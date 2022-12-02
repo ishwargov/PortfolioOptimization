@@ -14,11 +14,10 @@ if True:
 
 sns.set_theme()
 
-tickers = ['BNDX', 'URTH']
+tickers = ['BNDX', 'URTH', 'MSFT']
 start_date = '2012-01-01'
 end_date = "2022-11-20"
 df = pdr.get_data_yahoo([tickers][0], start=start_date, end=end_date)
-
 # remove NaN values
 data = df.copy()
 data['Adj Close'] = data['Adj Close'].ffill()
@@ -27,15 +26,11 @@ data['Adj Close'] = data['Adj Close'].bfill()
 df = df.bfill(axis=1)
 data = data['Adj Close']
 
-train_pct = 0.5
+train_pct = 0.7
 samples_train = int(train_pct*len(data))
 # print(len(data))
 data_train = data[:samples_train]
 data_test = data[samples_train:]
-
-max_trade = 30
-balance = 10000
-transaction_fee = 0.001
 
 plt.rcParams["figure.figsize"] = (10, 6)
 for i in tickers:
@@ -50,7 +45,11 @@ plt.savefig('StockPrice.png', bbox_inches='tight')
 
 # start training and predicting
 runs = 5
-timesteps = 10000
+timesteps = 25000
+
+max_trade = 1000
+balance = 10000
+transaction_fee = 0.001
 
 
 def train():
@@ -84,6 +83,9 @@ portfolio_weights_ppo = np.zeros([runs, length, stocks])
 
 i = 0
 while (i < runs):
+    max_trade = 1000
+    balance = 10000
+    transaction_fee = 0.001
     ppo = train()
     portfolio_weights_ppo[i] = np.array(predict())
     return_stocks = data_test.pct_change()
@@ -95,50 +97,62 @@ while (i < runs):
 
 
 # plotting the results
+def plot(weights, cumulative):
+    fig, axs = plt.subplots(2, 2, figsize=(17, 10), constrained_layout=True)
 
-fig, axs = plt.subplots(2, 2, figsize=(17, 10), constrained_layout=True)
+    ppo_mean = np.mean(np.array(cumulative), axis=0)
+    ppo_std = np.std(np.array(cumulative), axis=0)
 
-ppo_mean = np.mean(np.array(Cumulative_returns_daily_drl_ppo), axis=0)
-ppo_std = np.std(np.array(Cumulative_returns_daily_drl_ppo), axis=0)
+    axs[0, 0].plot(data_test.index, ppo_mean, color='tab:blue', linewidth=2.0)
+    axs[0, 0].fill_between(data_test.index, ppo_mean - ppo_std,
+                           ppo_mean + ppo_std, alpha=0.2, color='tab:blue')
+    axs[0, 0].margins(x=0)
+    axs[0, 0].margins(y=0)
+    axs[0, 0].set_ylim(0)
+    axs[0, 0].axhline(1, color='black', linestyle='--', lw=2)
+    axs[0, 0].set_ylabel("Cumulative Returns")
+    axs[0, 0].set_xlabel("Time (Years-Months)")
 
-axs[0, 0].plot(data_test.index, ppo_mean, color='tab:blue', linewidth=2.0)
-axs[0, 0].fill_between(data_test.index, ppo_mean - ppo_std,
-                       ppo_mean + ppo_std, alpha=0.2, color='tab:blue')
-axs[0, 0].margins(x=0)
-axs[0, 0].margins(y=0)
-axs[0, 0].set_ylim(0)
-axs[0, 0].axhline(1, color='black', linestyle='--', lw=2)
-axs[0, 0].set_ylabel("Cumulative Returns")
-axs[0, 0].set_xlabel("Time (Years-Months)")
+    weights_ = np.mean(np.array(weights), axis=0)
+    df = pd.DataFrame(weights_,
+                      index=data_test.index, columns=tickers)
+    stock_dat = ()
+    for t in tickers:
+        stock_dat += (df[t],)
+    axs[0, 1].stackplot(data_test.index, stock_dat, labels=tickers)
+    axs[0, 1].legend(loc='upper right')
+    axs[0, 1].margins(x=0)
+    axs[0, 1].margins(y=0)
+    axs[0, 1].set_ylabel("Weights (%)")
+    axs[0, 1].set_xlabel("Time (Years-Months)")
 
-portfolio_weights_ppo_ = np.mean(np.array(portfolio_weights_ppo), axis=0)
-df = pd.DataFrame(portfolio_weights_ppo_,
-                  index=data_test.index, columns=tickers)
-axs[0, 1].stackplot(data_test.index, df['URTH'], df['BNDX'], labels=tickers)
-axs[0, 1].legend(loc='upper right')
-axs[0, 1].margins(x=0)
-axs[0, 1].margins(y=0)
-axs[0, 1].set_ylabel("Weights (%)")
-axs[0, 1].set_xlabel("Time (Years-Months)")
+    weights_ = weights[np.argmax(
+        cumulative[:, -1])]
+    df = pd.DataFrame(weights_,
+                      index=data_test.index, columns=tickers)
+    stock_dat = ()
+    for t in tickers:
+        stock_dat += (df[t],)
+    axs[1, 0].stackplot(data_test.index, stock_dat, labels=tickers)
+    axs[1, 0].margins(x=0)
+    axs[1, 0].margins(y=0)
+    axs[1, 0].set_ylabel("Weights (%)")
+    axs[1, 0].set_xlabel("Time (Years-Months)")
 
-portfolio_weights_ppo_ = portfolio_weights_ppo[np.argmax(
-    Cumulative_returns_daily_drl_ppo[:, -1])]
-df = pd.DataFrame(portfolio_weights_ppo_,
-                  index=data_test.index, columns=tickers)
-axs[1, 0].stackplot(data_test.index, df['URTH'], df['BNDX'], labels=tickers)
-axs[1, 0].margins(x=0)
-axs[1, 0].margins(y=0)
-axs[1, 0].set_ylabel("Weights (%)")
-axs[1, 0].set_xlabel("Time (Years-Months)")
+    weights_ = weights[np.argmin(
+        cumulative[:, -1])]
+    df = pd.DataFrame(weights_,
+                      index=data_test.index, columns=tickers)
+    stock_dat = ()
+    for t in tickers:
+        stock_dat += (df[t],)
+    axs[1, 1].stackplot(data_test.index, stock_dat, labels=tickers)
+    axs[1, 1].margins(x=0)
+    axs[1, 1].margins(y=0)
+    axs[1, 1].set_ylabel("Weights (%)")
+    axs[1, 1].set_xlabel("Time (Years-Months)")
 
-portfolio_weights_ppo_ = portfolio_weights_ppo[np.argmin(
-    Cumulative_returns_daily_drl_ppo[:, -1])]
-df = pd.DataFrame(portfolio_weights_ppo_,
-                  index=data_test.index, columns=tickers)
-axs[1, 1].stackplot(data_test.index, df['URTH'], df['BNDX'], labels=tickers)
-axs[1, 1].margins(x=0)
-axs[1, 1].margins(y=0)
-axs[1, 1].set_ylabel("Weights (%)")
-axs[1, 1].set_xlabel("Time (Years-Months)")
+    plt.savefig('ppo.png', bbox_inches='tight')
 
-plt.savefig('ppo.png', bbox_inches='tight')
+
+plot(portfolio_weights_ppo, Cumulative_returns_daily_drl_ppo)
