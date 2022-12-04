@@ -57,7 +57,7 @@ def train():
     balance = 1000
     transaction_fee = 0.001
     policy = "MlpPolicy"
-    train_env = DummyVecEnv([lambda: StockEnv(df=data_train)])
+    train_env = DummyVecEnv([lambda: StockEnv(df=data_train,tickers= tickers)])
     model = PPO(policy, train_env, verbose=1)
     start = time.time()
     model.learn(total_timesteps=timesteps)
@@ -72,7 +72,7 @@ def predict():
     balance = 1000
     transaction_fee = 0.001
     actions_memory = []
-    env = DummyVecEnv([lambda: StockEnv(df=data_test)])
+    env = DummyVecEnv([lambda: StockEnv(df=data_test,tickers=tickers)])
     obs = env.reset()
     for i in range(len(data_test.index.unique())):
         action, _states = ppo.predict(obs)

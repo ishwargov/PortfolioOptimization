@@ -12,6 +12,12 @@ from gym import spaces
 
 from stable_baselines3.common.vec_env import DummyVecEnv
 
+from pypfopt.expected_returns import mean_historical_return
+from pypfopt.risk_models import CovarianceShrinkage
+from pypfopt import objective_functions
+from pypfopt.efficient_frontier import EfficientFrontier
+
+
 max_trade = 50
 balance = 10000
 transaction_fee = 0.001
@@ -20,8 +26,9 @@ transaction_fee = 0.001
 class StockEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, df):
+    def __init__(self, df, tickers):
         self.df = df
+        self.tickers = tickers
         self.stock_dim = self.df.shape[1]
         self.action_space = spaces.Box(low=-1, high=1, shape=(self.stock_dim,))
         self.observation_space = spaces.Box(
@@ -32,6 +39,8 @@ class StockEnv(gym.Env):
         self.memory = [balance]
         self.terminal = False
         self.day = 0
+        self.sharpe = 0
+        self.beta = 0
         self.act_memory = [[1/self.stock_dim]*self.stock_dim]
 
     def sell(self, index, action):
@@ -92,14 +101,29 @@ class StockEnv(gym.Env):
             final_assets += sum(np.array(self.state[1:(self.stock_dim+1)])*np.array(
                 self.state[(self.stock_dim+1):(self.stock_dim*2+1)]))
 
-            self.reward = final_assets - total_assets
             weights = self.normalize(
                 np.array(self.state[(self.stock_dim+1):(self.stock_dim*2+1)]))
+
+            # if self.day >= 10:
+            #     self.sharpe = self.get_sharpe(
+            #         self.df.iloc[:self.day, :], weights)
+
+            self.reward = self.beta*(self.sharpe) + \
+                (1-self.beta)*(final_assets - total_assets)
+
             self.act_memory.append(weights.tolist())
         return self.state, self.reward, self.terminal, {}
 
     def normalize(self, actions):
         return actions/(np.sum(actions)+1e-10)
+
+    def get_sharpe(self, data, weights):
+        mu = mean_historical_return(data)
+        S = CovarianceShrinkage(data).ledoit_wolf()
+        ef = EfficientFrontier(mu, S)
+        ef.set_weights({self.tickers[i]: weights[i]
+                       for i in range(len(self.tickers))})
+        return (ef.portfolio_performance()[2])
 
     def render(self, mode='human', close=False):
         return self.state
