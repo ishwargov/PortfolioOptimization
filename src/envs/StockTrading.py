@@ -40,7 +40,7 @@ class StockEnv(gym.Env):
         self.terminal = False
         self.day = 0
         self.sharpe = 0
-        self.beta = 0
+        self.beta = 1
         self.act_memory = [[1/self.stock_dim]*self.stock_dim]
 
     def sell(self, index, action):
@@ -104,9 +104,9 @@ class StockEnv(gym.Env):
             weights = self.normalize(
                 np.array(self.state[(self.stock_dim+1):(self.stock_dim*2+1)]))
 
-            # if self.day >= 10:
-            #     self.sharpe = self.get_sharpe(
-            #         self.df.iloc[:self.day, :], weights)
+            if self.day >= 10:
+                self.sharpe = self.get_sharpe(
+                    self.df.iloc[:self.day, :], weights)
 
             self.reward = self.beta*(self.sharpe) + \
                 (1-self.beta)*(final_assets - total_assets)

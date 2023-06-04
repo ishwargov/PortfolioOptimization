@@ -15,7 +15,7 @@ if True:
 sns.set_theme()
 
 tickers = ['URTH', 'BNDX']
-start_date = '2012-01-01'
+start_date = '2013-06-04'
 end_date = "2022-11-20"
 df = pdr.get_data_yahoo([tickers][0], start=start_date, end=end_date)
 # remove NaN values
@@ -29,8 +29,8 @@ data = data['Adj Close']
 train_pct = 0.8
 samples_train = int(train_pct*len(data))
 # print(len(data))
-data_train = data[:samples_train]
-data_test = data[samples_train:]
+data_train = data  # data[:samples_train]
+data_test = data  # [samples_train:]
 
 plt.rcParams["figure.figsize"] = (10, 6)
 for i in tickers:
@@ -57,7 +57,7 @@ def train():
     balance = 1000
     transaction_fee = 0.001
     policy = "MlpPolicy"
-    train_env = DummyVecEnv([lambda: StockEnv(df=data_train,tickers= tickers)])
+    train_env = DummyVecEnv([lambda: StockEnv(df=data_train, tickers=tickers)])
     model = PPO(policy, train_env, verbose=1)
     start = time.time()
     model.learn(total_timesteps=timesteps)
@@ -72,7 +72,7 @@ def predict():
     balance = 1000
     transaction_fee = 0.001
     actions_memory = []
-    env = DummyVecEnv([lambda: StockEnv(df=data_test,tickers=tickers)])
+    env = DummyVecEnv([lambda: StockEnv(df=data_test, tickers=tickers)])
     obs = env.reset()
     for i in range(len(data_test.index.unique())):
         action, _states = ppo.predict(obs)
