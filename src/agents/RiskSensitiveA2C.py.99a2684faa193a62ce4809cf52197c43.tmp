@@ -167,3 +167,55 @@ def select_action(actor,state):
     a,_ = actor.get_action(state)
   return a.cpu().numpy().flatten().reshape(1,-1)
 
+# train
+
+memory = ReplayMemory(50000)
+episodes = []
+episodes_assets = []
+BATCH_SIZE=1024
+ref_state = env.observation_space.sample()
+ref_action = env.action_space.sample()
+RAC = RiskAC(state_dim=env.observation_space.shape[0],
+               action_dim=env.action_space.shape[0],
+               max_action=1,
+               ref_state=ref_state,
+               ref_action=ref_action
+            ) 
+for i_episode in range(num_episodes):
+    # Initialize the environment and get it's state
+    state = env.reset()
+    state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+    last_asset = []
+    last_act = []
+    last_state = []
+    for t in count():
+        action = select_action(RAC.actor,state)
+        observation, reward, terminated, _ = env.step(action.reshape(-1))
+        reward = torch.tensor(np.array([reward]), device=device)
+        done = terminated
+        if terminated:
+            next_state = None
+            episodes.append(last_act)
+            episodes_assets.append(last_asset)
+        else:
+            next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+
+            # Store the transition in memory
+            memory.push(state.float(), torch.tensor(np.array([action]),device=device).float(), next_state.float(), reward.float())
+
+            # Move to the next state
+            state = next_state
+            last_act = env.actions_memory
+            last_asset = env.asset_memory
+            last_state = env.state_memory
+            #last_episode, last_asset  = env.env_method(method_name="get_action_memory")[0]
+            
+
+        # Perform one step of the optimization (on the policy network)
+        if len(memory) >= BATCH_SIZE:
+          RAC.train(memory)
+
+        if(done):
+          break
+
+print('Complete')
