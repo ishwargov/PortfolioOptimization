@@ -25,7 +25,7 @@ class PortfolioEnv(gym.Env):
         self.current_step = window_size
         # Define the action and observation space
         self.action_space = spaces.Box(
-            low=-10, high=5, shape=(self.data.shape[1],), dtype=np.float32)
+            low=-5, high=5, shape=(self.data.shape[1],), dtype=np.float32)
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(
             self.window_size, self.data.shape[1], self.data.shape[2]+1), dtype=np.float32)
 
@@ -41,7 +41,8 @@ class PortfolioEnv(gym.Env):
 
     def step(self, action):
         # Execute one step of the environment
-        action = softmax(action)  # Clip action values to [0, 1]
+        # Clip action values to [0, 1] and \Sigma w_i = 1
+        action = softmax(action)
         self.weights = np.array(action).reshape(-1)
         self.weights_memory.append(self.weights)
 
@@ -61,7 +62,7 @@ class PortfolioEnv(gym.Env):
         self.day += 1
         # Calculate the reward and done flag
         done = self.day >= self.data.shape[0] - 1
-        print(self.observation[-1, :, 0])
+        # print(self.observation[-1, :, 0])
         return self.observation, (reward/1e6), done, {}
 
     def reset(self):
