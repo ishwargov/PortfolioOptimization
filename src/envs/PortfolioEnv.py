@@ -6,9 +6,9 @@ import math
 import time
 from scipy.special import softmax
 
-import gym
-from gym.utils import seeding
-from gym import spaces
+import gymnasium as gym
+from gymnasium.utils import seeding
+from gymnasium import spaces
 
 from stable_baselines3.common.vec_env import DummyVecEnv
 
