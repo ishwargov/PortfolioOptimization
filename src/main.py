@@ -77,7 +77,7 @@ def parse_args():
     # fmt: off
     parser = argparse.ArgumentParser()
     parser.add_argument("--policy", default="TD3")                  # Policy name (TD3, DDPG or OurDDPG)
-    parser.add_argument("--seed", default=0, type=int)              # Sets Gym, PyTorch and Numpy seeds
+    parser.add_argument("--seed", default=42, type=int)              # Sets Gym, PyTorch and Numpy seeds
     parser.add_argument("--start_timesteps", default=4e3, type=int)# Time steps initial random policy is used
     parser.add_argument("--eval_freq", default=5e3, type=int)       # How often (time steps) we evaluate
     parser.add_argument("--max_timesteps", default=1e5, type=int)   # Max time steps to run environment
@@ -158,6 +158,7 @@ if __name__ == "__main__":
     print('length of test data', len(trade))
 
     stock_dimension = len(train.tic.unique())
+    print(train.tic.unique())
     state_space = 1 + 2*stock_dimension + len(INDICATORS)*stock_dimension
     print(f"Stock Dimension: {stock_dimension}, State Space: {state_space}")
 
@@ -258,8 +259,8 @@ if __name__ == "__main__":
 
         # Evaluate episode
         if (t + 1) % args.eval_freq == 0:
-            print(policy.select_action(env.observation_space.sample()))
-            print(policy.select_action(env.observation_space.sample()))
+            print(policy.select_action(replay_buffer.sample(1)[0]))
+            print(policy.select_action(replay_buffer.sample(1)[0]))
             evaluations.append(eval_policy(
                 policy, x_train, x_trade, args.seed))
             np.save(f"./results/{file_name}", evaluations)
