@@ -25,12 +25,12 @@ class PortfolioEnv(gym.Env):
         self.current_step = window_size
         # Define the action and observation space
         self.action_space = spaces.Box(
-            low=-5, high=5, shape=(self.data.shape[1],), dtype=np.float32)
+            low=-1, high=1, shape=(self.data.shape[1],), dtype=np.float32)
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(
             self.window_size, self.data.shape[1], self.data.shape[2]+1), dtype=np.float32)
 
-        self.portfolio_value = 1e6
-        self.balance = 1e6
+        self.portfolio_value = 1e3
+        self.balance = 1e3
 
         self.weights = np.zeros(self.data.shape[1])
         self.weights.fill(1/self.data.shape[1])
@@ -53,17 +53,19 @@ class PortfolioEnv(gym.Env):
         self.observation = self.get_observation()
         reward = 0
         for i in range(self.data.shape[1]):
-            reward += ((self.data[self.day+1, i, 0]-self.data[self.day, i, 0]) /
-                       self.data[self.day, i, 0])*self.weights[i]*self.balance
+            reward += ((self.data[self.day+1, i, 0]-self.data[self.day, i, 0]-1e-9) /
+                       self.data[self.day, i, 0]+1e-9)*self.weights[i]*self.balance
 
         self.balance += reward
+        # TODO fix reward Nan
+        print(reward)
         # Move to the next time step
         self.current_step += 1
         self.day += 1
         # Calculate the reward and done flag
         done = self.day >= self.data.shape[0] - 1
         # print(self.observation[-1, :, 0])
-        return self.observation, (reward/1e6), done, {}
+        return self.observation, (reward/1e3), done, {}
 
     def reset(self):
         # Reset the environment to the initial state

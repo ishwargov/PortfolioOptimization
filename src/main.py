@@ -3,6 +3,8 @@ from envs.PortfolioEnv import PortfolioEnv
 from agents.TD3 import TD3
 import itertools
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+
 from finrl.config import INDICATORS
 from finrl import config_tickers
 from finrl import config
@@ -172,6 +174,15 @@ if __name__ == "__main__":
 
     x_train = np.array(x_train)
     x_trade = np.array(x_trade)
+
+    # normalization
+    scalers = {}
+    for i in range(x_train.shape[1]):
+        scalers[i] = MinMaxScaler()
+        x_train[:, i, :] = scalers[i].fit_transform(x_train[:, i, :])
+
+    for i in range(x_trade.shape[1]):
+        x_trade[:, i, :] = scalers[i].transform(x_trade[:, i, :])
 
     # env setup
     env = make_env(args.window_size, x_train)

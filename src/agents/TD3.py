@@ -24,8 +24,9 @@ class Actor(nn.Module):
     def forward(self, state):
         a = F.relu(self.l1(state))
         a = F.relu(self.l2(a))
-        # TODO fix output action saturation
         return self.max_action * torch.tanh(self.l3(a))
+
+# TODO fix nan values
 
 
 class Critic(nn.Module):
@@ -56,8 +57,8 @@ class Critic(nn.Module):
 
     def Q1(self, state, action):
         sa = torch.cat([state, action], 1)
-
         q1 = F.relu(self.l1(sa))
+        # print(self.l1, sa, q1)
         q1 = F.relu(self.l2(q1))
         q1 = self.l3(q1)
         return q1
@@ -79,12 +80,12 @@ class TD3(object):
         self.actor = Actor(state_dim, action_dim, max_action).to(device)
         self.actor_target = copy.deepcopy(self.actor)
         self.actor_optimizer = torch.optim.Adam(
-            self.actor.parameters(), lr=1e-3)
+            self.actor.parameters(), lr=1e-10)
 
         self.critic = Critic(state_dim, action_dim).to(device)
         self.critic_target = copy.deepcopy(self.critic)
         self.critic_optimizer = torch.optim.Adam(
-            self.critic.parameters(), lr=1e-3)
+            self.critic.parameters(), lr=1e-10)
 
         self.max_action = max_action
         self.discount = discount
@@ -127,7 +128,7 @@ class TD3(object):
         # Compute critic loss
         critic_loss = F.mse_loss(current_Q1, target_Q) + \
             F.mse_loss(current_Q2, target_Q)
-
+        print(critic_loss)
         # Optimize the critic
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -142,6 +143,7 @@ class TD3(object):
             # Optimize the actor
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
+            # print(self.actor(state))
             # print(actor_loss)
             # print(self.actor.l3.weight.grad.data)
             # print(self.actor.l2.weight.grad.data)
