@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
     # dataset setup
 
-    TRAIN_START_DATE = '2020-01-01'
+    TRAIN_START_DATE = '2010-01-01'
     TRAIN_END_DATE = '2021-10-01'
     TRADE_START_DATE = '2021-10-01'
     TRADE_END_DATE = '2023-03-01'
