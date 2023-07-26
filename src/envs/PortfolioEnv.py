@@ -55,7 +55,7 @@ class PortfolioEnv(gym.Env):
         for i in range(self.data.shape[1]):
             diff = self.data[self.day+1, i, 0]-self.data[self.day, i, 0]
             old_val = self.data[self.day, i, 0]+1e-6
-            reward += (diff/old_val)*self.weights[i]*self.balance
+            reward += (diff/old_val)*self.weights[i]
 
         self.balance += reward
         if (np.isnan(reward)):

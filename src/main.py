@@ -127,12 +127,12 @@ if __name__ == "__main__":
     # dataset setup
 
     TRAIN_START_DATE = '2010-01-01'
-    TRAIN_END_DATE = '2021-10-01'
-    TRADE_START_DATE = '2021-10-01'
+    TRAIN_END_DATE = '2019-10-01'
+    TRADE_START_DATE = '2019-10-01'
     TRADE_END_DATE = '2023-03-01'
     df = YahooDownloader(start_date=TRAIN_START_DATE,
                          end_date=TRADE_END_DATE,
-                         ticker_list=["NFLX", "AMZN", "META", "CRM", "MSFT"]).fetch_data()
+                         ticker_list=["NFLX", "AMZN", "CRM", "MSFT"]).fetch_data()
     # ticker_list=config_tickers.DOW_30_TICKER).fetch_data()
     fe = FeatureEngineer(
         use_technical_indicator=True,
