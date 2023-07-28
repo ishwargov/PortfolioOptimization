@@ -41,14 +41,16 @@ def make_env(window_size, data):
 def eval_policy(policy, x_train, x_trade, seed, eval_episodes=1):
     eval_env = make_env(7, x_trade)
 
-    avg_reward = 0.
+    avg_reward = 0
     for _ in range(eval_episodes):
+        mem = []
         state, done = eval_env.reset(), False
         while not done:
             action = policy.select_action(np.array(state))
             state, reward, done, _ = eval_env.step(action)
+            mem.append([state,action,reward])
             avg_reward += reward
-
+        np.save('last_eval_mem',np.array(mem))
     avg_reward /= eval_episodes
 
     print("---------------------------------------")
@@ -270,8 +272,6 @@ if __name__ == "__main__":
 
         # Evaluate episode
         if (t + 1) % args.eval_freq == 0:
-            print(policy.select_action(replay_buffer.sample(1)[0]))
-            print(policy.select_action(replay_buffer.sample(1)[0]))
             evaluations.append(eval_policy(
                 policy, x_train, x_trade, args.seed))
             np.save(f"./results/{file_name}", evaluations)
