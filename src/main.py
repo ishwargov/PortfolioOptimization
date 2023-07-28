@@ -116,7 +116,7 @@ if __name__ == "__main__":
     args = parse_args()
     file_name = f"{args.policy}_{args.env}_{args.seed}"
     device = torch.device(
-        "cuda" if torch.cuda.is_available() and args.cuda else "cpu")
+        "cuda" if torch.cuda.is_available() else "cpu")
 
     if not os.path.exists("./results"):
         os.makedirs("./results")
