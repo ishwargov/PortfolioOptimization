@@ -12,3 +12,4 @@ seaborn
 stable_baselines3
 tensorflow
 torch
+torchrl
