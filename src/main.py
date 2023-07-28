@@ -32,6 +32,7 @@ import utils
 # Runs policy for X episodes and returns average reward
 # A fixed seed is used for the eval environment
 
+scalers = {}
 
 def make_env(window_size, data):
     env = PortfolioEnv(data, window_size)
@@ -40,7 +41,7 @@ def make_env(window_size, data):
 
 def eval_policy(policy, x_train, x_trade, seed, eval_episodes=1):
     eval_env = make_env(7, x_trade)
-
+    
     avg_reward = 0
     for _ in range(eval_episodes):
         mem = []
@@ -172,13 +173,12 @@ if __name__ == "__main__":
     for d in train.date.unique():
         x_train.append(train[train.date == d].iloc[:, 5:].to_numpy())
     for d in trade.date.unique():
-        x_trade.append(trade[trade.date == d].iloc[:, 5:].to_numpy())\
+        x_trade.append(trade[trade.date == d].iloc[:, 5:].to_numpy())
 
     x_train = np.array(x_train)
     x_trade = np.array(x_trade)
 
     # normalization
-    scalers = {}
     for i in range(x_train.shape[1]):
         scalers[i] = MinMaxScaler()
         x_train[:, i, :] = scalers[i].fit_transform(x_train[:, i, :])
