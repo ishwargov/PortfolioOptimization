@@ -11,5 +11,5 @@ scipy
 seaborn
 stable_baselines3
 tensorflow
-torch
+torch==2.0.0
 torchrl
