@@ -1,6 +1,5 @@
 git+https://github.com/AI4Finance-Foundation/FinRL.git
 gym
-gymnasium
 matplotlib
 numpy
 pandas
