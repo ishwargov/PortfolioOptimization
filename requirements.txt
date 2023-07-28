@@ -1,3 +1,5 @@
+setuptools==65.5.0
+swig
 git+https://github.com/AI4Finance-Foundation/FinRL.git
 gym
 matplotlib
