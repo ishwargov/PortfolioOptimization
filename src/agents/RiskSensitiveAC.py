@@ -5,7 +5,8 @@ from stable_baselines3.common.policies import MlpPolicy
 from stable_baselines3.common import set_global_seeds
 from stable_baselines3.common.utils import conv, linear
 from stable_baselines3 import A2C
-
+import torch
+from torch import nn
 
 class Actor(nn.Module):
     def __init__(self, state_dim, n_actions):
