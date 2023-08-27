@@ -26,8 +26,7 @@ class Actor(nn.Module):
         a = F.relu(self.l2(a))
         return self.max_action * torch.tanh(self.l3(a))
 
-# TODO fix nan values
-
+# TODO fix nan values - fixed 
 
 class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
